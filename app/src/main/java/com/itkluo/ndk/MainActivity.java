@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     public native void exception();
     //缓存处理
     public native void cache();
-    public native static void initIDs();
 
     // Used to load the 'native-lib' library on application startup.
     static {
