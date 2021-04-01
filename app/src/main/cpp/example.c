@@ -182,9 +182,9 @@ Java_com_itkluo_ndk_MainActivity_putArray(JNIEnv *env, jobject thiz, jintArray a
 JNIEXPORT jintArray JNICALL
 Java_com_itkluo_ndk_MainActivity_getArray(JNIEnv *env, jobject thiz, jint arrLength) {
     //创建一个指定大小的数组
-    jintArray  array = (*env)->NewIntArray(env, arrLength);
-    jint* elementp = (*env)->GetIntArrayElements(env, array, NULL);
-    jint* startP = elementp;
+    jintArray array = (*env)->NewIntArray(env, arrLength);
+    jint *elementp = (*env)->GetIntArrayElements(env, array, NULL);
+    jint *startP = elementp;
     int i = 0;
     for (; startP < elementp + arrLength; startP++) {
         (*startP) = i;
@@ -209,8 +209,10 @@ Java_com_itkluo_ndk_MainActivity_localRef(JNIEnv *env, jobject thiz) {
     int i = 0;
     for (; i < 5; i++) {
         //创建Date对象
-        jclass  clazz = (*env)->FindClass(env, "java/util/Date");
-        jmethodID  jmid = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+        jclass clazz = (*env)->FindClass(env, "java/util/Date");
+        jmethodID jmid = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+        //取得某一个构造方法的jmethodID，后面的 ()V 根据实际的构造函数写。有参数的话，括号内就写上参数签名
+//        jmethodID  jmid = (*env)->GetMethodID(env, clazz, "Date","()V");
         jobject thiz = (*env)->NewObject(env, clazz, jmid);
         //此处省略一百行代码...
 
@@ -227,6 +229,7 @@ Java_com_itkluo_ndk_MainActivity_localRef(JNIEnv *env, jobject thiz) {
 
 //创建
 jstring jstr;
+
 JNIEXPORT void JNICALL
 Java_com_itkluo_ndk_MainActivity_createGlobalRef(JNIEnv *env, jobject thiz) {
     jstring obj = (*env)->NewStringUTF(env, "China is Powerful");
@@ -254,8 +257,8 @@ Java_com_itkluo_ndk_MainActivity_deleteGlobalRef(JNIEnv *env, jobject thiz) {
 //中文问题，eclipse是有中文乱码问题的，但是我用Android Studio就没有中文乱码问题了，还是因为Android Studio版本问题？
 JNIEXPORT jstring JNICALL
 Java_com_itkluo_ndk_MainActivity_accessChineseChars(JNIEnv *env, jobject instance,
-                                                             jstring str_) {
-    char* newChar = "宋喆";
+                                                    jstring str_) {
+    char *newChar = "宋喆";
     return (*env)->NewStringUTF(env, newChar);
 }
 
@@ -284,12 +287,12 @@ Java_com_itkluo_ndk_MainActivity_exception(JNIEnv *env, jobject thiz) {
 
     //获取属性的值
     jstring jstr = (*env)->GetObjectField(env, thiz, jfid);
-    const char* str = (*env)->GetStringUTFChars(env, jstr, NULL);
+    const char *str = (*env)->GetStringUTFChars(env, jstr, NULL);
 
     //对比属性值是否合法
-    if(strcmp(str, "China John1") != 0) {
+    if (strcmp(str, "China John1") != 0) {
         //人为抛出异常，给Java层处理
-        jclass  newExceCls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+        jclass newExceCls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
         (*env)->ThrowNew(env, newExceCls, "key's value is invalid");
     }
 }
@@ -310,9 +313,36 @@ Java_com_itkluo_ndk_MainActivity_cache(JNIEnv *env, jobject thiz) {
 //初始化全局变量，加载完成之后，立刻缓存
 jfieldID globalFID;
 jmethodID globalMID;
+
 JNIEXPORT void JNICALL
 Java_com_itkluo_ndk_MainActivity_initIDs(JNIEnv *env, jclass clazz) {
     globalFID = (*env)->GetFieldID(env, clazz, "key", "Ljava/lang/String;");
     globalMID = (*env)->GetMethodID(env, clazz, "getRandomInt", "(I)I");
 
 }
+
+jclass personClass;
+JNIEXPORT void JNICALL //告诉虚拟机，这是jni函数
+Java_com_itkluo_ndk_MainActivity_native_1test4(JNIEnv *env, jobject instance) {
+    LOGD("测试局部引用");
+
+    if (personClass == NULL) {
+        //1. 提升全局解决不能重复使用问题
+        const char *person_class = "com/itkluo/ndk/Person";
+        jclass jclass1 = (*env)->FindClass(env, person_class);
+        personClass = (*env)->NewGlobalRef(env, jclass1);
+        LOGD("personClass == null 执行了。");
+    }
+
+    //Java Person 构造方法实例化
+    const char *sig = "()V";
+    const char *method = "<init>";//Java 构造方法标识
+    jmethodID init = (*env)->GetMethodID(env, personClass, method, sig);
+    //创建出来
+    (*env)->NewObject(env, personClass, init);
+
+    //2. 显式释放主动删除全局引用
+    (*env)->DeleteGlobalRef(env, personClass);
+    personClass = NULL;
+}
+

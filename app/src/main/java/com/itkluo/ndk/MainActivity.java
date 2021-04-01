@@ -1,6 +1,7 @@
 package com.itkluo.ndk;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -121,4 +122,9 @@ public class MainActivity extends AppCompatActivity {
         return UUID.randomUUID().toString();
     }
 
+    public void globalRef(View view) {
+        native_test4();
+    }
+
+    public native void native_test4();
 }
